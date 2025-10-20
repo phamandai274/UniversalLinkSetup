@@ -1,4 +1,3 @@
-# UniversalLinkSetup
 # 🚀 Universal Link Setup
 
 **Универсальный инструмент для управления символическими ссылками, запуском программ и настройками реестра Windows**
@@ -7,6 +6,7 @@
 [![.NET](https://img.shields.io/badge/.NET-Framework%204.0+-purple.svg)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
+[![Last Updated](https://img.shields.io/badge/updated-2025--10--20-brightgreen.svg)](https://github.com/phamandai274/UniversalLinkSetup)
 
 ---
 
@@ -22,6 +22,7 @@
 - [Примеры](#-примеры)
 - [FAQ](#-faq)
 - [Устранение проблем](#-устранение-проблем)
+- [Changelog](#-changelog)
 - [Разработка](#-разработка)
 - [Вклад](#-вклад)
 - [Лицензия](#-лицензия)
@@ -35,12 +36,14 @@
 ### 🌟 Ключевые особенности
 
 - ✅ **Символические ссылки** — Автоматическое создание symlink для игр и приложений
-- ✅ **Управление реестром** — Изменение записей реестра Windows
+- ✅ **Управление реестром** — Изменение и удаление записей реестра Windows
 - ✅ **Пред-программы** — Запуск VPN, Discord и других программ перед лаунчером
 - ✅ **Кастомные аргументы** — Профили для разных платформ (Steam, Epic, Rockstar)
 - ✅ **Автоматический бэкап** — Копирование обновлений через 3 минуты
 - ✅ **Импорт .reg файлов** — Автоматическая загрузка настроек реестра
 - ✅ **Службы Windows** — Создание и управление службами
+- ✅ **Множественные PreExe** — До 100 программ перед запуском лаунчера
+- ✅ **Удаление реестра** — Удаление разделов, параметров и значений
 
 ---
 
@@ -55,12 +58,10 @@
 
 ### ⚙️ Управление реестром
 
-Изменяйте записи реестра Windows:
-- Строки (`REG_SZ`)
-- Числа (`REG_DWORD`, `REG_QWORD`)
-- Бинарные данные (`REG_BINARY`)
-- Многострочные значения (`REG_MULTI_SZ`)
-- Расширяемые строки (`REG_EXPAND_SZ`)
+Изменяйте и удаляйте записи реестра Windows:
+- **Создание/изменение:** Строки, числа, бинарные данные
+- **Удаление:** Целые разделы или отдельные параметры
+- **Типы:** `REG_SZ`, `REG_DWORD`, `REG_QWORD`, `REG_BINARY`, `REG_MULTI_SZ`, `REG_EXPAND_SZ`
 
 ### 🎮 Кастомные профили
 
@@ -244,6 +245,7 @@ GameFolder=C:\Program Files\Rockstar Games
 LauncherExe=%AppDataLocal%\FiveM\FiveM.exe
 PreExe=C:\Tools\VPN.exe -connect
 PreExe2=C:\Tools\Discord.exe --minimized
+PreExe3=C:\Tools\Firewall.exe --enable
 LinkedGameFolder=D:\AllGames
 BackupFolders=Grand Theft Auto V, AppDataLocal, AppDataRoaming
 ```
@@ -255,7 +257,7 @@ BackupFolders=Grand Theft Auto V, AppDataLocal, AppDataRoaming
 | `GameFolder` | Папка для игр | `C:\Program Files\Rockstar Games` |
 | `LauncherExe` | Путь к лаунчеру | `%AppDataLocal%\FiveM\FiveM.exe` |
 | `PreExe` | Программа перед лаунчером | `C:\Tools\VPN.exe -connect` |
-| `PreExe2`, `PreExe3`... | Дополнительные программы | `C:\Tools\Discord.exe` |
+| `PreExe2`...`PreExe100` | Дополнительные программы (до 100) | `C:\Tools\Discord.exe` |
 | `LinkedGameFolder` | Symlink для всей папки игр | `D:\AllGames` |
 | `BackupFolders` | Папки для автобэкапа | `GTA5, AppDataLocal` |
 
@@ -299,7 +301,7 @@ C:\Program Files\Rockstar Games\Cyberpunk 2077 -> E:\Steam\Cyberpunk2077
 
 ### 💻 Секция [ProgramLinks]
 
-Создает ссылки в системных папках.
+Создает ссылки в системных папках. Поддерживает множественные записи.
 
 ```ini
 [ProgramLinks]
@@ -351,13 +353,26 @@ C:\Users\[user]\Documents\My Games\Saves -> [exe]\Data\GameSaves
 
 ### 📝 Секция [Registry]
 
-Изменяет записи реестра Windows.
+Изменяет и удаляет записи реестра Windows.
 
-**Новый формат (v1.0):**
+**Формат (v1.0 - упрощенный):**
 ```ini
 [Registry]
-# Формат: ИмяПараметра=Ключ|Тип|Данные
+# Создание/изменение: ИмяПараметра=Ключ|Тип|Данные
+InstallPath=HKCU\Software\MyGame|REG_SZ|%ProgramFiles%\MyGame
 
+# Удаление параметра: ИмяПараметра=Ключ|DELETE
+OldParameter=HKCU\Software\MyGame|DELETE
+
+# Удаление раздела: Имя=Ключ|DELETE
+DELETE_OldApp=HKCU\Software\OldApp|DELETE
+```
+
+#### Примеры операций:
+
+**Создание/изменение:**
+```ini
+[Registry]
 # Строка (REG_SZ)
 InstallPath=HKCU\Software\MyGame|REG_SZ|%ProgramFiles%\MyGame
 Version=HKCU\Software\MyGame|REG_SZ|1.0.0
@@ -379,6 +394,16 @@ SearchPaths=HKCU\Software\MyApp|REG_MULTI_SZ|C:\Path1|D:\Path2
 TempDir=HKCU\Software\MyApp|REG_EXPAND_SZ|%Temp%\MyApp
 ```
 
+**Удаление:**
+```ini
+[Registry]
+# Удалить параметр InstallPath
+InstallPath=HKCU\Software\MyGame|DELETE
+
+# Удалить весь раздел OldApp
+DELETE_OldApp=HKCU\Software\OldApp|DELETE
+```
+
 #### Типы данных:
 
 | Тип | Описание | Пример |
@@ -389,6 +414,7 @@ TempDir=HKCU\Software\MyApp|REG_EXPAND_SZ|%Temp%\MyApp
 | `REG_BINARY` | Бинарные данные | `01FF2A3B` |
 | `REG_MULTI_SZ` | Многострочная строка | `Path1|Path2` |
 | `REG_EXPAND_SZ` | Расширяемая строка | `%Temp%\App` |
+| `DELETE` | Удаление | - |
 
 #### Сокращения ключей:
 
@@ -435,23 +461,19 @@ PreExe2=C:\Tools\SteamHelper.exe
 Link_Grand Theft Auto V=D:\SteamGames\GTA5
 Reg_Platform=HKCU\Software\MyGame|REG_SZ|steam
 Reg_SteamPath=HKCU\Software\Valve\Steam|REG_SZ|D:\Steam
+Reg_DeleteEpic=HKCU\Software\MyGame|DELETE
 
 [Arg_epic]
 PreExe=C:\Tools\EpicVPN.exe
 Link_Grand Theft Auto V=D:\EpicGames\GTA5
 Reg_Platform=HKCU\Software\MyGame|REG_SZ|epic
-
-[Arg_rockstar]
-PreExe=C:\Tools\RockstarVPN.exe
-Link_Grand Theft Auto V=D:\RockstarGames\GTA5
-Reg_Platform=HKCU\Software\MyGame|REG_SZ|rockstar
+Reg_DeleteSteam=HKCU\Software\MyGame|DELETE
 ```
 
 **Использование:**
 ```cmd
 UniversalLinkSetup.exe -steam
 UniversalLinkSetup.exe -epic
-UniversalLinkSetup.exe -rockstar
 ```
 
 #### Параметры:
@@ -460,7 +482,64 @@ UniversalLinkSetup.exe -rockstar
 |----------|----------|
 | `PreExe`, `PreExe2`... | Пред-программы для профиля |
 | `Link_*` | Ссылки (переопределяют `[GameLinks]`) |
-| `Reg_*` | Реестр (формат: `Ключ|Тип|Данные`) |
+| `Reg_*` | Реестр (формат: `Ключ|Тип|Данные` или `Ключ|DELETE`) |
+
+---
+
+### 📂 Структура папок Data
+
+```
+[Путь к exe]\
+├── UniversalLinkSetup.exe
+├── config.ini
+└── Data\
+    ├── Regs\
+    │   ├── *.reg              # Загружаются ВСЕГДА
+    │   └── noinstall\         # Загружаются БЕЗ -install
+    │       └── *.reg
+    ├── AppDataLocal\
+    ├── AppDataRoaming\
+    ├── ProgramData\
+    ├── ProgramFiles\
+    └── ProgramFilesx86\
+```
+
+### 📊 Логика загрузки .reg файлов
+
+| Папка | Загружается | Когда |
+|-------|-------------|-------|
+| `Data\Regs\*.reg` | ✅ Всегда | При любом запуске |
+| `Data\Regs\noinstall\*.reg` | ⚠️ Условно | **Только БЕЗ** `-install` |
+
+**Пример использования:**
+
+`Data\Regs\` — Системные настройки (лицензии, базовые конфиги):
+```
+Data\Regs\
+├── license.reg          # Ключ активации
+├── base_config.reg      # Базовые настройки
+└── system_keys.reg      # Системные ключи
+```
+
+`Data\Regs\noinstall\` — Игровые настройки (игровые конфиги, сохранения):
+```
+Data\Regs\noinstall\
+├── game_settings.reg    # Настройки игры
+├── user_prefs.reg       # Пользовательские параметры
+└── keybinds.reg         # Привязки клавиш
+```
+
+**Режимы:**
+```cmd
+# Только системные настройки
+UniversalLinkSetup.exe -install
+# Загружает: Data\Regs\*.reg
+# Пропускает: Data\Regs\noinstall\*.reg
+
+# Все настройки
+UniversalLinkSetup.exe
+# Загружает: Data\Regs\*.reg + Data\Regs\noinstall\*.reg
+```
 
 ---
 
@@ -487,7 +566,7 @@ UniversalLinkSetup.exe
 
 ---
 
-### Пример 2: С VPN и Discord
+### Пример 2: С множественными PreExe
 
 ```ini
 [Settings]
@@ -495,6 +574,8 @@ GameFolder=C:\Program Files\Rockstar Games
 LauncherExe=%AppDataLocal%\FiveM\FiveM.exe
 PreExe=C:\Tools\VPN.exe -connect
 PreExe2=C:\Tools\Discord.exe --minimized
+PreExe3=C:\Tools\Firewall.exe --enable
+PreExe4=C:\Tools\Overlay.exe
 
 [GameLinks]
 Grand Theft Auto V=D:\Games\GTA5
@@ -502,7 +583,6 @@ Grand Theft Auto V=D:\Games\GTA5
 [ProgramLinks]
 AppDataLocal=FiveM
 AppDataLocal2=DigitalEntitlements
-AppDataRoaming=Discord
 ```
 
 **Запуск:**
@@ -513,11 +593,13 @@ UniversalLinkSetup.exe
 **Порядок выполнения:**
 1. VPN запускается
 2. Discord запускается (minimized)
-3. FiveM запускается
+3. Firewall запускается (enable)
+4. Overlay запускается
+5. FiveM запускается
 
 ---
 
-### Пример 3: Несколько платформ
+### Пример 3: Несколько платформ с удалением реестра
 
 ```ini
 [Settings]
@@ -538,22 +620,28 @@ Version=HKCU\Software\MyGame|REG_SZ|1.0.0
 PreExe=C:\Tools\SteamVPN.exe -connect
 Link_Grand Theft Auto V=D:\SteamGames\GTA5
 Reg_Platform=HKCU\Software\MyGame|REG_SZ|steam
+Reg_DeleteEpic=HKCU\Software\MyGame\Epic|DELETE
 
 [Arg_epic]
 PreExe=C:\Tools\EpicVPN.exe
 Link_Grand Theft Auto V=D:\EpicGames\GTA5
 Reg_Platform=HKCU\Software\MyGame|REG_SZ|epic
+Reg_DeleteSteam=HKCU\Software\MyGame\Steam|DELETE
 ```
 
 **Запуск для Steam:**
 ```cmd
 UniversalLinkSetup.exe -steam
 ```
+- Создает: `HKCU\Software\MyGame\Platform = steam`
+- Удаляет: `HKCU\Software\MyGame\Epic`
 
 **Запуск для Epic:**
 ```cmd
 UniversalLinkSetup.exe -epic
 ```
+- Создает: `HKCU\Software\MyGame\Platform = epic`
+- Удаляет: `HKCU\Software\MyGame\Steam`
 
 ---
 
@@ -588,6 +676,7 @@ MyFolder=C:\CustomLocation\MyFolder
 InstallPath=HKCU\Software\MyGame|REG_SZ|%ProgramFiles%\MyGame
 Version=HKCU\Software\MyGame|REG_SZ|1.0.0
 Enabled=HKCU\Software\MyGame|REG_DWORD|1
+DELETE_OldApp=HKCU\Software\OldApp|DELETE
 
 [Services]
 MyService=C:\Services\service.exe|auto|true
@@ -637,6 +726,24 @@ HKEY_CURRENT_USER\SOFTWARE\UniversalLinkSetup\AdminCredentials
 2. Удалите папку с программой
 3. (Опционально) Удалите данные администратора из реестра
 4. (Опционально) Удалите импортированные .reg файлы через `regedit`
+
+### ❔ Как работает удаление реестра?
+
+**Удалить параметр:**
+```ini
+[Registry]
+OldValue=HKCU\Software\MyGame|DELETE
+```
+
+**Удалить весь раздел:**
+```ini
+[Registry]
+DELETE_OldApp=HKCU\Software\OldApp|DELETE
+```
+
+### ❔ Сколько PreExe можно указать?
+
+До 100 программ: `PreExe`, `PreExe2`, `PreExe3`, ..., `PreExe100`
 
 ---
 
@@ -695,6 +802,17 @@ HKEY_CURRENT_USER\SOFTWARE\UniversalLinkSetup\AdminCredentials
 2. Подождите 3 минуты после запуска
 3. Проверьте, что папка стала реальной (не symlink)
 
+### ⚠️ .reg файлы не загружаются
+
+**Проблема:** Файлы .reg из папки `Data\Regs\` не импортируются.
+
+**Решение:**
+1. Проверьте, что файлы имеют расширение `.reg`
+2. Убедитесь, что они находятся в правильной папке:
+   - `Data\Regs\*.reg` — загружаются всегда
+   - `Data\Regs\noinstall\*.reg` — только без `-install`
+3. Запустите с `-console` для просмотра логов
+
 ### 🐛 Отладка
 
 Запустите с консолью для просмотра логов:
@@ -708,6 +826,34 @@ UniversalLinkSetup.exe -console
 - ❌ Ошибки
 - ℹ️ Информационные сообщения
 - 🔍 Найденные файлы и папки
+
+---
+
+## 📝 Changelog
+
+### v1.0.0 (2025-10-20 06:50:26 UTC)
+- ✅ Первый релиз
+- ✅ Символические ссылки для игр и приложений
+- ✅ Управление реестром Windows (упрощенный формат)
+- ✅ Удаление записей реестра (разделы и параметры)
+- ✅ Множественные PreExe (до 100)
+- ✅ Кастомные профили через аргументы
+- ✅ Автоматический бэкап через 3 минуты
+- ✅ Импорт .reg файлов:
+  - `Data\Regs\*.reg` — всегда
+  - `Data\Regs\noinstall\*.reg` — без `-install`
+- ✅ Управление службами Windows
+- ✅ Оптимизация кода (-86% от исходного размера)
+- ✅ Сохранение данных администратора
+- ✅ Поддержка переменных окружения
+- ✅ Раздельное выполнение базовых и кастомных настроек
+
+### Технические улучшения:
+- Сокращены имена методов и переменных
+- Объединены повторяющиеся операции
+- Упрощена логика загрузки .reg файлов
+- Улучшена производительность
+- Уменьшен размер исполняемого файла
 
 ---
 
@@ -739,13 +885,14 @@ UniversalLinkSetup/
 ├── LICENSE                   # Лицензия MIT
 └── Data/                     # Данные программы
     ├── Regs/                 # .reg файлы
-    │   ├── settings/         # Настройки (всегда)
-    │   └── games/            # Игровые (пропуск с -install)
-    ├── AppDataLocal/         # Данные для AppDataLocal
-    ├── AppDataRoaming/       # Данные для AppDataRoaming
-    ├── ProgramData/          # Данные для ProgramData
-    ├── ProgramFiles/         # Данные для ProgramFiles
-    └── ProgramFilesx86/      # Данные для ProgramFiles(x86)
+    │   ├── *.reg             # Системные (всегда)
+    │   └── noinstall/        # Игровые (без -install)
+    │       └── *.reg
+    ├── AppDataLocal/
+    ├── AppDataRoaming/
+    ├── ProgramData/
+    ├── ProgramFiles/
+    └── ProgramFilesx86/
 ```
 
 ### Архитектура
@@ -754,7 +901,7 @@ UniversalLinkSetup/
 
 1. **Config Loader** — Загрузка config.ini
 2. **Symlink Manager** — Создание символических ссылок
-3. **Registry Manager** — Управление реестром Windows
+3. **Registry Manager** — Управление реестром Windows (создание/удаление)
 4. **Process Manager** — Запуск программ и лаунчеров
 5. **Backup Manager** — Автоматическое копирование обновлений
 6. **Admin Manager** — Управление правами администратора
@@ -773,7 +920,9 @@ UniversalLinkSetup/
    - Базовые игровые ссылки [GameLinks]
    - Кастомные игровые ссылки [Arg_*]
 7. Управление службами [Services]
-8. Импорт .reg файлов
+8. Импорт .reg файлов:
+   - Data\Regs\*.reg (всегда)
+   - Data\Regs\noinstall\*.reg (без -install)
 9. Применение реестра:
    - Базовые записи [Registry]
    - Кастомные записи [Arg_*]
@@ -856,7 +1005,7 @@ SOFTWARE.
 
 - **GitHub:** [@phamandai274](https://github.com/phamandai274)
 - **Issues:** [GitHub Issues](https://github.com/phamandai274/UniversalLinkSetup/issues)
-- **Email:** phamandai274@example.com
+- **Releases:** [GitHub Releases](https://github.com/phamandai274/UniversalLinkSetup/releases)
 
 ---
 
@@ -874,27 +1023,16 @@ SOFTWARE.
 ![GitHub forks](https://img.shields.io/github/forks/phamandai274/UniversalLinkSetup?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/phamandai274/UniversalLinkSetup)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/phamandai274/UniversalLinkSetup)
-
----
-
-## 🔄 История версий
-
-### v1.0.0 (2025-10-20)
-- ✅ Первый релиз
-- ✅ Символические ссылки
-- ✅ Управление реестром (новый формат)
-- ✅ Множественные PreExe
-- ✅ Кастомные профили
-- ✅ Автоматический бэкап
-- ✅ Импорт .reg файлов
-- ✅ Управление службами
-- ✅ Оптимизация кода (-86%)
+![Code size](https://img.shields.io/github/languages/code-size/phamandai274/UniversalLinkSetup)
+![Last commit](https://img.shields.io/github/last-commit/phamandai274/UniversalLinkSetup)
 
 ---
 
 <div align="center">
 
 **Made with ❤️ by [@phamandai274](https://github.com/phamandai274)**
+
+**Last Updated: 2025-10-20 06:50:26 UTC**
 
 ⭐ **Поставьте звезду, если проект полезен!** ⭐
 
